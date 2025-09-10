@@ -13,9 +13,6 @@ import Itens from "./components/itens"
 // remover
 //await AsyncStorage.removeItem('@token');
 
-//TODO mudar a sintaxe para:
-//[ {id: number, nome: string, status: boolean}, ... ]
-
 //AsyncStorage.clear()
 
 type objects = {
@@ -28,56 +25,64 @@ export default function App() {
   const [itens, setItens] = useState<objects[]>([])
   const [item, setItem] = useState<string>("")
 
-  async function salvarSappora(algumaCoisa: string) {
+  const salv = async (lista: objects[]) => {
+    const envio = JSON.stringify(lista);
+    await AsyncStorage.setItem('@lista', envio);
+  }
+
+  async function adicionarItem(algumaCoisa: string) {
     if (algumaCoisa.trim().length <= 0) {
       return
     }
     setItens((prev) => {
-      const retorno: objects[] = [...prev, { id: prev.length + 1, nome: algumaCoisa, status: false }]
-      void salv(prev, retorno);
-      return retorno
+      const newId = prev.length > 0 ? prev[prev.length - 1].id + 1 : 1;
+      const novoItem: objects = { id: newId, nome: algumaCoisa, status: false };
+      const novaLista = [...prev, novoItem];
+      void salv(novaLista);
+      return novaLista;
     })
-  }
-
-  const salv = async (prev: objects[], entrada: objects[]) => {
-    const lista: objects[] = [...prev, ...entrada]
-    const envio = JSON.stringify(lista);
-    await AsyncStorage.setItem('@lista', envio);
   }
 
   useEffect(() => {
     const r2 = async () => {
       const data: string | null = await AsyncStorage.getItem('@lista')
       if (data != null) {
-        console.log(data)
         const lista = JSON.parse(data)
-        console.log(lista)
         setItens(lista)
       }
     }
     r2()
   }, [])
 
-  async function remover(index: number) {
+  async function remover(idParaRemover: number) {
     setItens((prev) => {
-      const removido = prev.splice(index, 1);
-      salv(prev, removido);
-      return prev
+      const novaLista = prev.filter(item => item.id !== idParaRemover);
+      void salv(novaLista);
+      return novaLista;
+    });
+  }
+
+  async function editar(id: number, novoNome: string){
+    if (novoNome.trim().length <= 0) {
+      return
+    }
+    setItens((prev) => {
+      const novaLista = prev.map(item =>
+        item.id === id ? { ...item, nome: novoNome } : item
+      );
+      void salv(novaLista);
+      return novaLista;
     })
   }
 
-  async function marcar(index: number, novo: boolean) {
-    console.log("Mudar o status do item:", index, "para o valor:", novo)
+  async function marcar(id: number, novoStatus: boolean) {
     setItens((prev) => {
-      prev[index - 1].status = novo;
-      r(prev)
-      return prev
+      const novaLista = prev.map(item =>
+        item.id === id ? { ...item, status: novoStatus } : item
+      );
+      void salv(novaLista);
+      return novaLista;
     })
-
-    const r = async (prev: objects[]) => {
-      const envio = JSON.stringify(prev);
-      await AsyncStorage.setItem('@lista', envio);
-    }
   }
   return (
     <View style={styles.container}>
@@ -86,22 +91,22 @@ export default function App() {
       <View style={styles.viewTopo} >
         <Text style={styles.h1} >Lista de compras</Text>
       </View>
-      <View style={styles.viewDosImput} >
-        <View style={styles.viewDoImput}>
+      <View style={styles.viewDosInputs} >
+        <View style={styles.viewDoInput}>
           <TextInput style={styles.placeholder} placeholder="Digite o produto:" placeholderTextColor={"#00e5ffff"} value={item} onChangeText={(novo) => {
             setItem(novo);
           }} />
         </View>
 
         <TouchableOpacity
-          style={styles.touchableOcaralho}
+          style={styles.botaoAdicionar}
           onPress={() => {
             setItem("")
-            salvarSappora(item);
+            adicionarItem(item);
           }}
         >
           <View>
-            <Text style={styles.botao} >+</Text>
+            <Text style={styles.botao}>+</Text>
           </View>
         </TouchableOpacity>
       </View>
@@ -110,7 +115,7 @@ export default function App() {
         {itens.map((item: objects) => {
           return (
             <View key={item.id}>
-              <Itens objeto={item} marcar={marcar} />
+              <Itens objeto={item} marcar={marcar} remover={remover} editar={editar} />
             </View>
           )
         })}
@@ -168,22 +173,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  viewDosImput: {
+  viewDosInputs: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 20,
   },
-  viewDoImput: {
+  viewDoInput: {
     width: "75%",
     height: 60,
     backgroundColor: "#000",
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
-
   },
-  touchableOcaralho: {
+  botaoAdicionar: {
     backgroundColor: "black",
     width: "15%",
     height: 60,
