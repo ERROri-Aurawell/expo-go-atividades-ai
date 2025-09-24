@@ -1,5 +1,5 @@
 import { StatusBar } from 'expo-status-bar';
-import { Text, View, Button, Image, StyleSheet, TouchableOpacity, useColorScheme, TextInput } from "react-native";
+import { Text, View, Button, Image, StyleSheet, TouchableOpacity, useColorScheme, TextInput, ScrollView } from "react-native";
 import React, { useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Socket } from 'socket.io-client';
@@ -111,7 +111,7 @@ export default function App() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.componentes} >
+      <ScrollView style={styles.componentes} >
         {itens.map((item: objects) => {
           return (
             <View key={item.id}>
@@ -119,7 +119,7 @@ export default function App() {
             </View>
           )
         })}
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -199,10 +199,12 @@ const styles = StyleSheet.create({
     marginLeft: 10
   },
   componentes: {
-    padding: 20,
+    padding: 25,
     borderWidth: 2,
     borderColor: "00e5ffff",
     borderRadius: 40,
+    width: 350,
+    height: 700
   }
 
 });
